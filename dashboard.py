@@ -103,7 +103,7 @@ def show_dashboard():
             "Live mode — automatic refresh every 0.5 seconds"
         )
 
-        st.session_state.last_data = app.update()
+        st.session_state.last_data = app.get_snapshot()
 
     else:
 
@@ -112,9 +112,13 @@ def show_dashboard():
         )
 
         if "last_data" not in st.session_state:
-            st.session_state.last_data = app.update()
+            st.session_state.last_data = app.get_snapshot()
 
     data = st.session_state.last_data
+
+    if data is None:
+        st.info("Waiting for first measurements...")
+        return
 
     real = data["real"]
     twin = data["twin"]

@@ -1,4 +1,5 @@
 from collections import deque
+from datetime import datetime
 
 
 class Historian:
@@ -14,8 +15,9 @@ class Historian:
         self.history = deque(maxlen=max_points)
 
     def add(self, real_data, twin_data, diagnostics):
-
         self.history.append({
+
+            "timestamp": datetime.now(),
 
             "rpm": real_data["rpm"],
 

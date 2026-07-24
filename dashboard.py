@@ -31,7 +31,7 @@ def plot_trend(
 
     fig.add_trace(
         go.Scatter(
-            x=df.index,
+            x=df["timestamp"],
             y=values,
             mode="lines",
             name=title,
@@ -53,7 +53,7 @@ def plot_trend(
             b=20
         ),
         showlegend=False,
-        xaxis_title="Measurement",
+        xaxis_title="Date / Time",
         yaxis_title=unit,
         uirevision=column
     )
@@ -210,6 +210,7 @@ def show_dashboard():
         return
 
     df = pd.DataFrame(history)
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
 
     chart_col1, chart_col2 = st.columns(2)
 

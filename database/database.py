@@ -1,6 +1,8 @@
 import sqlite3
 from datetime import datetime
 
+from core.motor_state import MotorState
+
 
 class Database:
 
@@ -48,6 +50,21 @@ class Database:
         self.connection.commit()
 
     def save(self, motor_data, twin_data):
+        """
+        Записва данните в SQLite.
+
+        Приема както MotorState, така и dict.
+        """
+
+        if isinstance(motor_data, MotorState):
+            motor = motor_data.to_dict()
+        else:
+            motor = motor_data
+
+        if isinstance(twin_data, MotorState):
+            twin = twin_data.to_dict()
+        else:
+            twin = twin_data
 
         cursor = self.connection.cursor()
 
@@ -83,23 +100,23 @@ class Database:
 
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
 
-            motor_data["rpm"],
+            motor["rpm"],
 
-            motor_data["current"],
+            motor["current"],
 
-            motor_data["torque"],
+            motor["torque"],
 
-            motor_data["temperature"],
+            motor["temperature"],
 
-            motor_data["voltage"],
+            motor["voltage"],
 
-            motor_data["frequency"],
+            motor["frequency"],
 
-            motor_data["power"],
+            motor["power"],
 
-            motor_data["efficiency"],
+            motor["efficiency"],
 
-            twin_data["health"]
+            twin.get("health", 100)
 
         ))
 

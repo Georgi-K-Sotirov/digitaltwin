@@ -5,6 +5,7 @@ from devices.motor import MotorSimulator
 from core.digital_twin import DigitalTwin
 from core.diagnostics import Diagnostics
 from core.historian import Historian
+from core.motor_state import MotorState
 from database.database import Database
 
 
@@ -44,32 +45,55 @@ class DataCollector:
     def _run(self):
 
         while self.running:
+            # -----------------------------
+            # Реални данни
+            # -----------------------------
+            real_dict = self.motor.update()
 
-            real_data = self.motor.update()
-
-            twin_data = self.twin.update(real_data)
-
-            diagnostic_data = self.diagnostics.analyze(
-                real_data,
-                twin_data
+            real_state = MotorState.from_dict(
+                real_dict,
+                source="Simulator"
             )
 
+            # -----------------------------
+            # Digital Twin
+            # -----------------------------
+            twin_dict = self.twin.update(
+                real_state.to_dict()
+            )
+
+            # -----------------------------
+            # Diagnostics
+            # -----------------------------
+            diagnostic_data = self.diagnostics.analyze(
+                real_state.to_dict(),
+                twin_dict
+            )
+
+            # -----------------------------
+            # Historian
+            # -----------------------------
             self.historian.add(
-                real_data,
-                twin_data,
+                real_state,
+                twin_dict,
                 diagnostic_data
             )
 
+            # -----------------------------
+            # Database
+            # -----------------------------
             self.database.save(
-                real_data,
-                twin_data
+                real_state,
+                twin_dict
             )
 
+            # -----------------------------
+            # Snapshot
+            # -----------------------------
             with self.lock:
-
                 self.last_snapshot = {
-                    "real": real_data,
-                    "twin": twin_data,
+                    "real": real_state.to_dict(),
+                    "twin": twin_dict,
                     "diagnostics": diagnostic_data
                 }
 

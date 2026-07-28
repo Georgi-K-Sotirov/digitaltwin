@@ -1,6 +1,8 @@
 from collections import deque
 from datetime import datetime
 
+from core.motor_state import MotorState
+
 
 class Historian:
     """
@@ -11,25 +13,38 @@ class Historian:
     def __init__(self, max_points=300):
 
         self.max_points = max_points
-
         self.history = deque(maxlen=max_points)
 
     def add(self, real_data, twin_data, diagnostics):
+        """
+        Приема както MotorState, така и речник (dict).
+        """
+
+        if isinstance(real_data, MotorState):
+            real = real_data.to_dict()
+        else:
+            real = real_data
+
+        if isinstance(twin_data, MotorState):
+            twin = twin_data.to_dict()
+        else:
+            twin = twin_data
+
         self.history.append({
 
             "timestamp": datetime.now(),
 
-            "rpm": real_data["rpm"],
+            "rpm": real["rpm"],
 
-            "current": real_data["current"],
+            "current": real["current"],
 
-            "temperature": real_data["temperature"],
+            "temperature": real["temperature"],
 
-            "torque": real_data["torque"],
+            "torque": real["torque"],
 
-            "power": real_data["power"],
+            "power": real["power"],
 
-            "health": twin_data["health"],
+            "health": twin.get("health", 100),
 
             "status": diagnostics["status"]
 

@@ -6,19 +6,16 @@ from core.motor_state import MotorState
 
 class Historian:
     """
-    Съхранява последните N измервания в оперативната памет.
-    Използва се за графики в реално време.
+    Stores recent measurements, Digital Twin predictions,
+    residuals and diagnostics for real-time visualization.
     """
 
-    def __init__(self, max_points=300):
+    def __init__(self, max_points=1000):
 
         self.max_points = max_points
         self.history = deque(maxlen=max_points)
 
-    def add(self, real_data, twin_data, diagnostics):
-        """
-        Приема както MotorState, така и речник (dict).
-        """
+    def add(self, real_data, twin_data, residuals, diagnostics):
 
         if isinstance(real_data, MotorState):
             real = real_data.to_dict()
@@ -34,21 +31,50 @@ class Historian:
 
             "timestamp": datetime.now(),
 
+            # Real measurements
             "rpm": real["rpm"],
-
             "current": real["current"],
-
             "temperature": real["temperature"],
-
             "torque": real["torque"],
-
             "power": real["power"],
+            "voltage": real["voltage"],
+            "frequency": real["frequency"],
+            "efficiency": real["efficiency"],
 
-            "health": twin.get("health", 100),
+            # Twin prediction
+            "twin_rpm": twin["rpm"],
+            "twin_current": twin["current"],
+            "twin_temperature": twin["temperature"],
+            "twin_torque": twin["torque"],
+            "twin_power": twin["power"],
+            "twin_voltage": twin["voltage"],
+            "twin_frequency": twin["frequency"],
+            "twin_efficiency": twin["efficiency"],
 
-            "status": diagnostics["status"]
+            # Residuals
+            "rpm_error": residuals["rpm_error"],
+            "current_error": residuals["current_error"],
+            "temperature_error": residuals["temperature_error"],
+            "voltage_error": residuals["voltage_error"],
+            "frequency_error": residuals["frequency_error"],
+            "torque_error": residuals["torque_error"],
+            "power_error": residuals["power_error"],
+            "efficiency_error": residuals["efficiency_error"],
+
+            # Diagnostics
+            "health": diagnostics["health"],
+            "status": diagnostics["status"],
+            "faults": diagnostics["faults"]
 
         })
+
+    def load_history(self, history):
+
+        self.history.clear()
+
+        for item in history:
+
+            self.history.append(item)
 
     def get_history(self):
 

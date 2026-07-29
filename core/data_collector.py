@@ -7,6 +7,7 @@ from core.diagnostics import Diagnostics
 from core.historian import Historian
 from core.motor_state import MotorState
 from database.database import Database
+from core.residual_generator import ResidualGenerator
 
 
 class DataCollector:
@@ -25,9 +26,16 @@ class DataCollector:
 
         self.motor = MotorSimulator()
         self.twin = DigitalTwin()
+        self.residual_generator = ResidualGenerator()
         self.diagnostics = Diagnostics()
         self.historian = Historian()
         self.database = Database()
+
+        history = self.database.load_recent_history(
+            self.historian.max_points
+        )
+
+        self.historian.load_history(history)
 
         self.last_snapshot = None
 
@@ -42,7 +50,10 @@ class DataCollector:
 
         self.thread.start()
 
+
+
     def _run(self):
+
 
         while self.running:
             # -----------------------------
@@ -62,12 +73,16 @@ class DataCollector:
                 real_state.to_dict()
             )
 
+            residual_state = self.residual_generator.calculate(
+                real_state.to_dict(),
+                twin_dict
+            )
+
             # -----------------------------
             # Diagnostics
             # -----------------------------
-            diagnostic_data = self.diagnostics.analyze(
-                real_state.to_dict(),
-                twin_dict
+            diagnostic_data = self.diagnostics.evaluate(
+                residual_state
             )
 
             # -----------------------------
@@ -76,6 +91,7 @@ class DataCollector:
             self.historian.add(
                 real_state,
                 twin_dict,
+                residual_state,
                 diagnostic_data
             )
 
@@ -94,6 +110,7 @@ class DataCollector:
                 self.last_snapshot = {
                     "real": real_state.to_dict(),
                     "twin": twin_dict,
+                    "residuals": residual_state,
                     "diagnostics": diagnostic_data
                 }
 
@@ -116,6 +133,13 @@ class DataCollector:
     def decrease_load(self):
 
         self.motor.decrease_load()
+
+    def set_fault(self, fault):
+
+        self.motor.faults.clear()
+
+        if fault is not None:
+            self.motor.faults.enable(fault)
 
     def shutdown(self):
 

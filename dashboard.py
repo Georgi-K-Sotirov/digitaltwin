@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app import DigitalTwinApplication
+from devices.fault_injection import FaultMode
 
 
 def plot_trend(
@@ -64,7 +65,7 @@ def plot_trend(
 
     st.plotly_chart(
         fig,
-        use_container_width=True,
+        width="stretch",
         key=f"chart_{column}",
         config={
             "displaylogo": False,
@@ -81,10 +82,37 @@ st.set_page_config(
 
 st.title("Digital Twin Platform")
 
-if "application" not in st.session_state:
-    st.session_state.application = DigitalTwinApplication()
+st.sidebar.header("Fault Injection")
 
-app = st.session_state.application
+fault_name = st.sidebar.selectbox(
+    "Active Fault",
+    [
+        "None",
+        "Mechanical Overload",
+        "Cooling Failure",
+        "Voltage Drop",
+        "Current Sensor Offset",
+        "RPM Sensor Offset",
+        "Efficiency Loss",
+    ],
+)
+
+if "app" not in st.session_state:
+    st.session_state.app = DigitalTwinApplication()
+
+app = st.session_state.app
+
+fault_map = {
+    "None": None,
+    "Mechanical Overload": FaultMode.MECHANICAL_OVERLOAD,
+    "Cooling Failure": FaultMode.COOLING_FAILURE,
+    "Voltage Drop": FaultMode.VOLTAGE_DROP,
+    "Current Sensor Offset": FaultMode.CURRENT_SENSOR_OFFSET,
+    "RPM Sensor Offset": FaultMode.RPM_SENSOR_OFFSET,
+    "Efficiency Loss": FaultMode.EFFICIENCY_LOSS,
+}
+
+app.set_fault(fault_map[fault_name])
 
 live_mode = st.toggle(
     "Live update",
@@ -123,6 +151,7 @@ def show_dashboard():
     real = data["real"]
     twin = data["twin"]
     diag = data["diagnostics"]
+    res = data["residuals"]
 
     history = app.get_history()
 
@@ -162,28 +191,125 @@ def show_dashboard():
             f"{real['efficiency'] * 100:.1f} %"
         )
 
+        st.metric(
+            "Voltage",
+            f"{real['voltage']:.1f} V"
+        )
+
+        st.metric(
+            "Frequency",
+            f"{real['frequency']:.2f} Hz"
+        )
+
     with metric_col3:
 
         st.metric(
             "Health",
-            f"{twin['health']:.1f} %"
+            f"{diag['health']:.1f} %"
         )
-
         st.metric(
             "Status",
             diag["status"]
         )
+    st.divider()
 
+    st.subheader("Digital Twin Prediction")
+
+    twin_col1, twin_col2 = st.columns(2)
+
+    with twin_col1:
+
+        st.metric(
+            "Expected RPM",
+            f"{twin['rpm']:.1f}"
+        )
+
+        st.metric(
+            "Expected Current",
+            f"{twin['current']:.2f} A"
+        )
+
+        st.metric(
+            "Expected Temperature",
+            f"{twin['temperature']:.1f} °C"
+        )
+
+    with twin_col2:
+
+        st.metric(
+            "Expected Voltage",
+            f"{twin['voltage']:.1f} V"
+        )
+
+        st.metric(
+            "Expected Power",
+            f"{twin['power']:.2f} kW"
+        )
+
+        st.metric(
+            "Expected Efficiency",
+            f"{twin['efficiency'] * 100:.1f} %"
+        )
+
+    st.divider()
+
+    st.subheader("Residuals")
+
+    res_col1, res_col2 = st.columns(2)
+
+    with res_col1:
+
+        st.metric(
+            "RPM Error",
+            f"{res['rpm_error']:.2f}"
+        )
+
+        st.metric(
+            "Current Error",
+            f"{res['current_error']:.2f}"
+        )
+
+        st.metric(
+            "Temperature Error",
+            f"{res['temperature_error']:.2f}"
+        )
+
+        st.metric(
+            "Voltage Error",
+            f"{res['voltage_error']:.2f}"
+        )
+
+    with res_col2:
+
+        st.metric(
+            "Torque Error",
+            f"{res['torque_error']:.2f}"
+        )
+
+        st.metric(
+            "Power Error",
+            f"{res['power_error']:.2f}"
+        )
+
+        st.metric(
+            "Efficiency Error",
+            f"{res['efficiency_error'] * 100:.2f} %"
+        )
+
+        st.metric(
+            "Frequency Error",
+            f"{res['frequency_error']:.2f} Hz"
+        )
     st.subheader("Active alarms")
 
-    if diag["alarms"]:
+    if diag["faults"]:
 
-        for alarm in diag["alarms"]:
-            st.warning(alarm)
+        for fault in diag["faults"]:
+            st.warning(fault)
 
     else:
 
-        st.success("No active alarms")
+        st.success("No active faults")
 
     st.divider()
 

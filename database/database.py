@@ -98,7 +98,7 @@ class Database:
 
         """, (
 
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            datetime.now().isoformat(timespec="microseconds"),
 
             motor["rpm"],
 
@@ -121,6 +121,65 @@ class Database:
         ))
 
         self.connection.commit()
+
+    def load_recent_history(self, limit=1000):
+        """
+        Зарежда последните N измервания от базата.
+
+        Връща списък от речници, сортирани
+        от най-старите към най-новите.
+        """
+
+        cursor = self.connection.cursor()
+
+        cursor.execute("""
+            SELECT
+                timestamp,
+                rpm,
+                current,
+                torque,
+                temperature,
+                voltage,
+                frequency,
+                power,
+                efficiency,
+                health
+            FROM motor_history
+            ORDER BY id DESC
+            LIMIT ?
+        """, (limit,))
+
+        rows = cursor.fetchall()
+
+        history = []
+
+        # обръщаме реда, за да върви времето напред
+        for row in reversed(rows):
+            history.append({
+
+                "timestamp": row[0],
+
+                "rpm": row[1],
+
+                "current": row[2],
+
+                "torque": row[3],
+
+                "temperature": row[4],
+
+                "voltage": row[5],
+
+                "frequency": row[6],
+
+                "power": row[7],
+
+                "efficiency": row[8],
+
+                "health": row[9]
+
+            })
+
+        return history
 
     def close(self):
 

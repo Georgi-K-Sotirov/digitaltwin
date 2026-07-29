@@ -1,5 +1,5 @@
-from core.data_collector import DataCollector
-
+from core.data_collector_manager import DataCollectorManager
+from devices.fault_injection import FaultMode
 
 class DigitalTwinApplication:
     """
@@ -11,7 +11,7 @@ class DigitalTwinApplication:
 
     def __init__(self):
 
-        self.collector = DataCollector()
+        self.collector = DataCollectorManager.get_collector()
 
     def get_snapshot(self):
 
@@ -28,6 +28,9 @@ class DigitalTwinApplication:
     def decrease_load(self):
 
         self.collector.decrease_load()
+
+    def set_fault(self, fault: FaultMode | None):
+        self.collector.set_fault(fault)
 
     def shutdown(self):
 

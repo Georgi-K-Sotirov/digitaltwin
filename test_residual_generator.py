@@ -1,20 +1,35 @@
 from core.residual_generator import ResidualGenerator
 
-
-measured = {
-    "rpm": 1430,
-    "current": 13.8,
-    "temperature": 67.0,
+real = {
+    "rpm": 1450,
+    "current": 6.2,
+    "temperature": 45,
+    "voltage": 400,
+    "frequency": 50,
+    "torque": 15,
+    "power": 2.2,
+    "efficiency": 92,
 }
 
 predicted = {
-    "rpm": 1460,
-    "current": 12.5,
-    "temperature": 62.0,
+    "rpm": 1448,
+    "current": 6.0,
+    "temperature": 44,
+    "voltage": 399,
+    "frequency": 50,
+    "torque": 14.8,
+    "power": 2.1,
+    "efficiency": 91.5,
 }
 
 generator = ResidualGenerator()
-result = generator.calculate(measured, predicted)
 
-for key, value in result.items():
-    print(f"{key}: {value}")
+residual = generator.calculate(real, predicted)
+
+print("Тип:", type(residual))
+print()
+print("Обект:")
+print(residual)
+print()
+print("Като речник:")
+print(residual.to_dict())

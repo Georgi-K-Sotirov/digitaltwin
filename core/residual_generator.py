@@ -1,59 +1,36 @@
-from typing import Any
-
-
 class ResidualGenerator:
     """
-    Изчислява остатъчните грешки между измерените стойности
-    на двигателя и стойностите, прогнозирани от Digital Twin.
-
-    Residual = measured - predicted
+    Calculates residuals between
+    measured values and Digital Twin predictions.
     """
 
-    SIGNALS = (
-        "rpm",
-        "current",
-        "voltage",
-        "frequency",
-        "torque",
-        "temperature",
-        "power",
-        "efficiency",
-    )
+    def calculate(self, measured, expected):
 
-    def calculate(
-        self,
-        measured: dict[str, Any],
-        predicted: dict[str, Any],
-    ) -> dict[str, float | None]:
-        """
-        Връща residual за всеки наличен параметър.
+        residuals = {
 
-        Липсващите или невалидните стойности се връщат като None,
-        вместо приложението да прекъсне.
-        """
+            "rpm_error":
+                measured["rpm"] - expected["rpm"],
 
-        residuals: dict[str, float | None] = {}
+            "current_error":
+                measured["current"] - expected["current"],
 
-        for signal in self.SIGNALS:
-            measured_value = self._to_float(measured.get(signal))
-            predicted_value = self._to_float(predicted.get(signal))
+            "temperature_error":
+                measured["temperature"] - expected["temperature"],
 
-            key = f"{signal}_residual"
+            "voltage_error":
+                measured["voltage"] - expected["voltage"],
 
-            if measured_value is None or predicted_value is None:
-                residuals[key] = None
-                continue
+            "frequency_error":
+                measured["frequency"] - expected["frequency"],
 
-            residuals[key] = measured_value - predicted_value
+            "torque_error":
+                measured["torque"] - expected["torque"],
+
+            "power_error":
+                measured["power"] - expected["power"],
+
+            "efficiency_error":
+                measured["efficiency"] - expected["efficiency"],
+        }
 
         return residuals
-
-    @staticmethod
-    def _to_float(value: Any) -> float | None:
-        if value is None:
-            return None
-
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return None

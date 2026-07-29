@@ -1,22 +1,21 @@
-from core.motor_state import MotorState
+from core.models.electrical_model import MotorElectricalModel
 
+model = MotorElectricalModel()
 
-motor_data = {
-    "rpm": 1460,
-    "current": 12.5,
-    "voltage": 400,
-    "frequency": 50,
-    "torque": 42.0,
-    "temperature": 61.5,
-    "power": 7.1,
-    "efficiency": 0.91,
-}
+print("-" * 70)
 
-state = MotorState.from_dict(
-    motor_data,
-    source="Simulator",
-)
+for load in [0, 10, 25, 50, 75, 100]:
 
-print(state)
-print()
-print(state.to_dict())
+    result = model.find_operating_point(load)
+
+    print(
+        f"Load: {load:3d}% | "
+        f"RPM: {result['rpm']:.1f} | "
+        f"I: {result['current']:.2f} A | "
+        f"P: {result['power']:.2f} kW | "
+        f"T: {result['torque']:.2f} Nm | "
+        f"η: {result['efficiency']*100:.1f}% | "
+        f"Slip: {result['slip']:.4f}"
+    )
+
+print("-" * 70)

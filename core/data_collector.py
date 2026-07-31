@@ -1,7 +1,7 @@
 import threading
 import time
 
-from devices.motor import MotorSimulator
+from devices.sqlite_motor_reader import SQLiteMotorReader
 from core.digital_twin import DigitalTwin
 from core.diagnostics import Diagnostics
 from core.historian import Historian
@@ -24,7 +24,7 @@ class DataCollector:
 
     def __init__(self):
 
-        self.motor = MotorSimulator()
+        self.motor = SQLiteMotorReader()
         self.twin = DigitalTwin()
         self.residual_generator = ResidualGenerator()
         self.diagnostics = Diagnostics()
@@ -60,6 +60,10 @@ class DataCollector:
             # Реални данни
             # -----------------------------
             real_dict = self.motor.update()
+
+            if real_dict is None:
+                time.sleep(0.5)
+                continue
 
             real_state = MotorState.from_dict(
                 real_dict,

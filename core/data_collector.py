@@ -67,7 +67,7 @@ class DataCollector:
 
             real_state = MotorState.from_dict(
                 real_dict,
-                source="Simulator"
+                source="Simulink"
             )
 
             # -----------------------------
@@ -140,10 +140,7 @@ class DataCollector:
 
     def set_fault(self, fault):
 
-        self.motor.faults.clear()
-
-        if fault is not None:
-            self.motor.faults.enable(fault)
+        self.motor.set_fault(fault)
 
     def shutdown(self):
 
@@ -152,4 +149,5 @@ class DataCollector:
         if self.thread.is_alive():
             self.thread.join(timeout=2)
 
+        self.motor.close()
         self.database.close()

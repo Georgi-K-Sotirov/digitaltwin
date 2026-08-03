@@ -2,30 +2,21 @@ from models.induction_motor import InductionMotorModel
 
 
 class DigitalTwin:
-    """
-    Digital Twin Engine.
-
-    Mathematical model of a healthy induction motor.
-
-    Responsibilities:
-        - predict expected behaviour
-        - no diagnostics
-        - no residual calculation
-        - no health estimation
-    """
 
     def __init__(self):
 
         self.model = InductionMotorModel()
 
-        self.last_prediction = {}
-
     def update(self, real_data):
 
-        expected = self.model.predict(
-            real_data["load_percent"]
-        )
+        self.model.correct(real_data)
 
-        self.last_prediction = expected
+        expected = self.model.predict(
+            load_percent=real_data["load_percent"],
+            voltage=real_data["voltage"],
+            frequency=real_data["frequency"],
+            ambient_temperature=25.0,
+            dt=0.05,
+        )
 
         return expected

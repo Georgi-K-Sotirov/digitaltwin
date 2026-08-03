@@ -117,6 +117,21 @@ class InductionMotorModel:
 
         self.temperature = ambient_temperature
 
+    def correct(self, real_data):
+        """
+        Синхронизира вътрешното състояние на модела
+        с реалното измерено състояние.
+        """
+
+        self.omega = (
+                real_data["rpm"]
+                * 2.0
+                * math.pi
+                / 60.0
+        )
+
+        self.temperature = real_data["temperature"]
+
     def _calculate_synchronous_speed(
         self,
         frequency

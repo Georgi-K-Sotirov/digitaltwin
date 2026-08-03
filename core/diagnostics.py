@@ -12,60 +12,139 @@ class Diagnostics:
 
         self.thresholds = {
 
-            "rpm_error": 20.0,
-            "current_error": 1.0,
-            "temperature_error": 5.0,
-            "voltage_error": 10.0,
-            "frequency_error": 0.5,
-            "torque_error": 3.0,
-            "power_error": 0.5,
-            "efficiency_error": 0.03,
+            "rpm_error": 80.0,
+
+            "current_error": 2.5,
+
+            "temperature_error": 8.0,
+
+            "voltage_error": 15.0,
+
+            "frequency_error": 1.0,
+
+            "torque_error": 20.0,
+
+            "power_error": 2.0,
+
+            "efficiency_error": 0.10,
         }
 
     def evaluate(self, residuals):
 
         faults = []
 
-        if abs(residuals["rpm_error"]) > self.thresholds["rpm_error"]:
+        rpm_error = abs(residuals["rpm_error"])
+        current_error = abs(residuals["current_error"])
+        temperature_error = abs(
+            residuals["temperature_error"]
+        )
+        voltage_error = abs(residuals["voltage_error"])
+        frequency_error = abs(
+            residuals["frequency_error"]
+        )
+        torque_error = abs(residuals["torque_error"])
+        power_error = abs(residuals["power_error"])
+        efficiency_error = abs(
+            residuals["efficiency_error"]
+        )
+
+        if rpm_error > self.thresholds["rpm_error"]:
             faults.append("RPM deviation")
 
-        if abs(residuals["current_error"]) > self.thresholds["current_error"]:
+        if current_error > self.thresholds["current_error"]:
             faults.append("Current anomaly")
 
-        if abs(residuals["temperature_error"]) > self.thresholds["temperature_error"]:
+        if (
+                temperature_error
+                > self.thresholds["temperature_error"]
+        ):
             faults.append("Cooling problem")
 
-        if abs(residuals["voltage_error"]) > self.thresholds["voltage_error"]:
+        if voltage_error > self.thresholds["voltage_error"]:
             faults.append("Voltage drop")
 
-        if abs(residuals["frequency_error"]) > self.thresholds["frequency_error"]:
+        if (
+                frequency_error
+                > self.thresholds["frequency_error"]
+        ):
             faults.append("Frequency deviation")
 
-        if abs(residuals["torque_error"]) > self.thresholds["torque_error"]:
+        if torque_error > self.thresholds["torque_error"]:
             faults.append("Mechanical overload")
 
-        if abs(residuals["power_error"]) > self.thresholds["power_error"]:
+        if power_error > self.thresholds["power_error"]:
             faults.append("Power deviation")
 
-        if abs(residuals["efficiency_error"]) > self.thresholds["efficiency_error"]:
+        if (
+                efficiency_error
+                > self.thresholds["efficiency_error"]
+        ):
             faults.append("Efficiency degradation")
+
+        # Намаляваме health само за превишението над прага
+        rpm_excess = max(
+            0.0,
+            rpm_error - self.thresholds["rpm_error"]
+        )
+
+        current_excess = max(
+            0.0,
+            current_error
+            - self.thresholds["current_error"]
+        )
+
+        temperature_excess = max(
+            0.0,
+            temperature_error
+            - self.thresholds["temperature_error"]
+        )
+
+        voltage_excess = max(
+            0.0,
+            voltage_error
+            - self.thresholds["voltage_error"]
+        )
+
+        frequency_excess = max(
+            0.0,
+            frequency_error
+            - self.thresholds["frequency_error"]
+        )
+
+        torque_excess = max(
+            0.0,
+            torque_error
+            - self.thresholds["torque_error"]
+        )
+
+        power_excess = max(
+            0.0,
+            power_error
+            - self.thresholds["power_error"]
+        )
+
+        efficiency_excess = max(
+            0.0,
+            efficiency_error
+            - self.thresholds["efficiency_error"]
+        )
 
         health = 100.0
 
-        health -= abs(residuals["rpm_error"]) * 0.20
-        health -= abs(residuals["current_error"]) * 2.0
-        health -= abs(residuals["temperature_error"]) * 0.15
-        health -= abs(residuals["voltage_error"]) * 0.10
-        health -= abs(residuals["frequency_error"]) * 5.0
-        health -= abs(residuals["torque_error"]) * 0.40
-        health -= abs(residuals["power_error"]) * 2.0
-        health -= abs(residuals["efficiency_error"]) * 100.0
+        health -= rpm_excess * 0.03
+        health -= current_excess * 0.8
+        health -= temperature_excess * 0.10
+        health -= voltage_excess * 0.05
+        health -= frequency_excess * 2.0
+        health -= torque_excess * 0.10
+        health -= power_excess * 0.8
+        health -= efficiency_excess * 20.0
 
         health = max(0.0, min(100.0, health))
 
-        if health >= 95:
+        if not faults:
             status = "Healthy"
-        elif health >= 80:
+        elif health >= 80.0:
             status = "Warning"
         else:
             status = "Fault"

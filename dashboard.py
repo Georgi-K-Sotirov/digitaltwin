@@ -329,10 +329,6 @@ def show_dashboard():
             f"{res['current_error']:.2f}"
         )
 
-        st.metric(
-            "Temperature Error",
-            f"{res['temperature_error']:.2f}"
-        )
 
         st.metric(
             "Voltage Error",

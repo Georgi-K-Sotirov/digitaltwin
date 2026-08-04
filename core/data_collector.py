@@ -8,6 +8,7 @@ from core.historian import Historian
 from core.motor_state import MotorState
 from database.database import Database
 from core.residual_generator import ResidualGenerator
+from core.calibration import CalibrationManager
 
 class DataCollector:
     """
@@ -31,6 +32,11 @@ class DataCollector:
         self.twin = DigitalTwin()
         self.residual_generator = ResidualGenerator()
         self.diagnostics = Diagnostics()
+        self.calibration = CalibrationManager()
+
+        self.calibration_mode = False
+        self.calibration_completed = False
+        self.calibration_statistics = None
         self.historian = Historian()
         if self.offline_mode:
 
@@ -73,6 +79,14 @@ class DataCollector:
             real_dict = self.reader.update()
 
             if real_dict is None:
+
+                if (
+                        self.calibration_mode
+                        and self.offline_mode
+                        and self.reader.finished()
+                ):
+                    self._finish_calibration()
+
                 time.sleep(0.001)
                 continue
 
@@ -80,6 +94,8 @@ class DataCollector:
                 real_dict,
                 source=real_dict.get("source", "Unknown")
             )
+
+
 
             # -----------------------------
             # Digital Twin
@@ -92,6 +108,11 @@ class DataCollector:
                 real_state.to_dict(),
                 twin_dict
             )
+
+            if self.calibration_mode:
+                self.calibration.collect(
+                    residual_state
+                )
 
             # -----------------------------
             # Diagnostics
@@ -128,7 +149,6 @@ class DataCollector:
                     "residuals": residual_state,
                     "diagnostics": diagnostic_data
                 }
-            print("Historian:", len(self.historian.get_history()))
 
     def get_snapshot(self):
 
@@ -151,6 +171,59 @@ class DataCollector:
     def set_fault(self, fault):
 
         self.reader.set_fault(fault)
+
+    def start_calibration(self) -> bool:
+        """
+        Starts calibration using the currently loaded
+        offline experiment.
+        """
+
+        if not self.offline_mode:
+            return False
+
+        if self.reader.sample_count() == 0:
+            return False
+
+        self.calibration.clear()
+
+        self.calibration_mode = True
+        self.calibration_completed = False
+        self.calibration_statistics = None
+
+        self.historian.clear()
+
+        self.reader.stop()
+        self.reader.reset()
+        self.reader.play()
+
+        return True
+
+    def _finish_calibration(self) -> None:
+        """
+        Calculates and stores thresholds after the reference
+        experiment has finished.
+        """
+
+        if not self.calibration_mode:
+            return
+
+        self.calibration_statistics = (
+            self.calibration.compute_thresholds()
+        )
+
+        self.calibration.save()
+
+        self.calibration_mode = False
+        self.calibration_completed = True
+
+        self.residual_generator.reload_calibration()
+
+    def get_calibration_status(self) -> dict:
+        return {
+            "running": self.calibration_mode,
+            "completed": self.calibration_completed,
+            "statistics": self.calibration_statistics,
+        }
 
     def shutdown(self):
 

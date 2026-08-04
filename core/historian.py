@@ -56,17 +56,38 @@ class Historian:
             # Residuals
             "rpm_error": residuals["rpm_error"],
             "current_error": residuals["current_error"],
-            "temperature_error": residuals["temperature_error"],
             "voltage_error": residuals["voltage_error"],
             "frequency_error": residuals["frequency_error"],
             "torque_error": residuals["torque_error"],
             "power_error": residuals["power_error"],
             "efficiency_error": residuals["efficiency_error"],
+            "rpm_normalized": residuals["rpm_normalized"],
+            "current_normalized": residuals["current_normalized"],
+
+            "torque_normalized":
+                residuals["torque_normalized"],
+
+            "power_normalized":
+                residuals["power_normalized"],
+
+            "voltage_normalized":
+                residuals["voltage_normalized"],
+
+            "frequency_normalized":
+                residuals["frequency_normalized"],
+
+            "efficiency_normalized":
+                residuals["efficiency_normalized"],
+
+            "diagnostic_index":
+                diagnostics["diagnostic_index"],
 
             # Diagnostics
             "health": diagnostics["health"],
             "status": diagnostics["status"],
             "faults": diagnostics["faults"]
+
+
 
         })
 

@@ -30,6 +30,8 @@ class SQLiteMotorReader:
         )
         self.connection.row_factory = sqlite3.Row
 
+        self.offline_mode = False
+
     def update(self) -> dict[str, Any] | None:
         try:
             cursor = self.connection.cursor()
@@ -129,3 +131,13 @@ class SQLiteMotorReader:
 
     def close(self) -> None:
         self.connection.close()
+
+    def progress(self):
+        return 0.0
+
+    def sample_count(self):
+        return 0
+
+    @property
+    def index(self):
+        return 0

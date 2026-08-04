@@ -9,7 +9,6 @@ from core.motor_state import MotorState
 from database.database import Database
 from core.residual_generator import ResidualGenerator
 
-
 class DataCollector:
     """
     Фонов събирач на данни.
@@ -22,20 +21,32 @@ class DataCollector:
         - SQLite Database
     """
 
-    def __init__(self):
+    def __init__(self, reader=None):
 
-        self.motor = SQLiteMotorReader()
+        if reader is None:
+            reader = SQLiteMotorReader()
+
+        self.reader = reader
+        self.offline_mode = getattr(reader, "offline_mode", False)
         self.twin = DigitalTwin()
         self.residual_generator = ResidualGenerator()
         self.diagnostics = Diagnostics()
         self.historian = Historian()
+        if self.offline_mode:
+
+            self.historian.set_unlimited(True)
+
+        else:
+
+            self.historian.set_unlimited(False)
         self.database = Database()
 
-        history = self.database.load_recent_history(
-            self.historian.max_points
-        )
+        if not self.offline_mode:
+            history = self.database.load_recent_history(
+                self.historian.max_points
+            )
 
-        self.historian.load_history(history)
+            self.historian.load_history(history)
 
         self.last_snapshot = None
 
@@ -59,15 +70,15 @@ class DataCollector:
             # -----------------------------
             # Реални данни
             # -----------------------------
-            real_dict = self.motor.update()
+            real_dict = self.reader.update()
 
             if real_dict is None:
-                time.sleep(0.5)
+                time.sleep(0.001)
                 continue
 
             real_state = MotorState.from_dict(
                 real_dict,
-                source="Simulink"
+                source=real_dict.get("source", "Unknown")
             )
 
             # -----------------------------
@@ -117,8 +128,7 @@ class DataCollector:
                     "residuals": residual_state,
                     "diagnostics": diagnostic_data
                 }
-
-            time.sleep(0.5)
+            print("Historian:", len(self.historian.get_history()))
 
     def get_snapshot(self):
 
@@ -132,15 +142,15 @@ class DataCollector:
 
     def increase_load(self):
 
-        self.motor.increase_load()
+        self.reader.increase_load()
 
     def decrease_load(self):
 
-        self.motor.decrease_load()
+        self.reader.decrease_load()
 
     def set_fault(self, fault):
 
-        self.motor.set_fault(fault)
+        self.reader.set_fault(fault)
 
     def shutdown(self):
 
@@ -149,5 +159,5 @@ class DataCollector:
         if self.thread.is_alive():
             self.thread.join(timeout=2)
 
-        self.motor.close()
+        self.reader.close()
         self.database.close()

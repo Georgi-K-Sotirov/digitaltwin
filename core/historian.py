@@ -14,6 +14,7 @@ class Historian:
 
         self.max_points = max_points
         self.history = deque(maxlen=max_points)
+        self.unlimited = False
 
     def add(self, real_data, twin_data, residuals, diagnostics):
 
@@ -30,6 +31,7 @@ class Historian:
         self.history.append({
 
             "timestamp": datetime.now(),
+            "simulation_time": real["simulation_time"],
 
             # Real measurements
             "rpm": real["rpm"],
@@ -83,3 +85,18 @@ class Historian:
     def clear(self):
 
         self.history.clear()
+
+    def set_unlimited(self, enabled: bool):
+
+        self.unlimited = enabled
+
+        if enabled and isinstance(self.history, deque):
+
+            self.history = list(self.history)
+
+        elif (not enabled) and isinstance(self.history, list):
+
+            self.history = deque(
+                self.history[-self.max_points:],
+                maxlen=self.max_points
+            )

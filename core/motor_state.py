@@ -15,6 +15,7 @@ class MotorState:
     """
 
     timestamp: datetime
+    simulation_time: float
 
     rpm: float
     current: float
@@ -63,6 +64,9 @@ class MotorState:
 
         return cls(
             timestamp=timestamp,
+            simulation_time=cls._to_float(
+                data.get("simulation_time")
+            ),
             rpm=cls._to_float(data.get("rpm")),
             current=cls._to_float(data.get("current")),
             voltage=cls._to_float(data.get("voltage")),
